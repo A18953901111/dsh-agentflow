@@ -1,0 +1,16 @@
+# AgentFlow bundle.
+#
+# 1) The shipped presets mount the workflow engine inside an isolated realm per
+#    Agent, which a Host plugin cannot reach. A Host plugin that consumes the
+#    service therefore needs the engine in the Host configuration: enabling the
+#    base `workflow-ptc` row here does exactly that (its root row ships disabled).
+# 2) The plugin row itself.
+- id: workflow-ptc
+  name: '@deepseek-ai/dsh-workflow-ptc'
+  disabled: false
+  config:
+    provider: spawn
+
+- insert:
+    - id: agentflow
+      name: dsh-agentflow

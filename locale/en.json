@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "AgentFlow Workflows",
+    "description": "Turn multi-step AI flows into templates: parallel subagents, budget gates, citation anchoring, run artifacts and a run panel."
+  }
+}

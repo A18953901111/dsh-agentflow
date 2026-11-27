@@ -1,0 +1,143 @@
+id: research-report
+name: 深度调研报告
+version: 2
+description: 拆解问题 → 并行取证 → 交叉验证 → 成稿，结论必须带可核查引用
+budget:
+  maxAgents: 8
+  maxBatches: 1
+  maxWallClockSec: 600
+inputs:
+  type: object
+  required: [topic]
+  properties:
+    topic:
+      type: string
+      minLength: 2
+    depth:
+      type: string
+      enum: [quick, deep]
+      default: quick
+steps:
+  - id: plan
+    kind: agent
+    phase: 拆解
+    prompt: |
+      你是研究规划员。主题：{{topic}}
+      把它拆成 3-5 个能用公开资料独立回答的子问题，并为每个子问题给出检索关键词。
+      只输出 JSON，不要解释。
+    schema:
+      type: object
+      additionalProperties: false
+      required: [questions]
+      properties:
+        questions:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required: [id, question, keywords]
+            properties:
+              id:
+                type: string
+              question:
+                type: string
+              keywords:
+                type: array
+                items:
+                  type: string
+
+  - id: gather
+    kind: fanout
+    over: plan.questions
+    as: q
+    phase: 取证
+    maxItems: 3
+    prompt: |
+      只回答下面这一个子问题，不要扩展到其他问题。
+      子问题：{{q.question}}
+      关键词：{{q.keywords}}
+      预算纪律：最多做 2 次检索，不要反复搜索；没有把握就少写一条。
+      要求：给出 2-3 条可核查的事实，每条必须带 url 与 quote；quote 必须是来源原文中的一句话，不得改写。
+      只输出 JSON。
+    schema:
+      type: object
+      additionalProperties: false
+      required: [questionId, findings]
+      properties:
+        questionId:
+          type: string
+        findings:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required: [claim, url, quote]
+            properties:
+              claim:
+                type: string
+              url:
+                type: string
+              quote:
+                type: string
+
+  - id: verify
+    kind: fanout
+    over: gather
+    as: g
+    phase: 验证
+    maxItems: 3
+    prompt: |
+      你是审稿人，只做否定性核查。你看到的只有结论与引文，看不到作者的解释，这正是本流程的设计。
+      判断每一条结论：引文是否真的支持它；来源是否与结论相关；是否只是推测。
+      证据不足一律判 none，不要为了礼貌给 strong。
+      结论组：{{g}}
+      只输出 JSON。
+    schema:
+      type: object
+      additionalProperties: false
+      required: [verdicts]
+      properties:
+        verdicts:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required: [claim, support, reason]
+            properties:
+              claim:
+                type: string
+              support:
+                type: string
+                enum: [strong, weak, none]
+              reason:
+                type: string
+
+  - id: write
+    kind: agent
+    phase: 成稿
+    dependsOn: [verify]
+    prompt: |
+      写一份 800-1200 字的中文报告，主题：{{topic}}，读者是需要做决策的人。
+      硬性规则：
+      1. 只使用 support=strong 的结论；support 为 weak/none 的一律不写。
+      2. 每条结论后用 [n] 标注，文末给出 n → url 的对照。
+      3. 不确定的地方直接写「暂无可靠证据」，不要编。
+      验证结果：{{verify}}
+    schema:
+      type: object
+      additionalProperties: false
+      required: [markdown, citations]
+      properties:
+        markdown:
+          type: string
+        citations:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required: [n, url]
+            properties:
+              n:
+                type: integer
+              url:
+                type: string

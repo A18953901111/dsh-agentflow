@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "AgentFlow 工作流引擎",
+    "description": "把多步 AI 流程固化成模板：并行子 agent、预算闸门、引用锚点校验、运行产物与面板。"
+  }
+}

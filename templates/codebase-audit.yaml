@@ -1,0 +1,180 @@
+id: codebase-audit
+name: 代码库审计
+version: 1
+description: 扫描高风险模块 → 并行审查 → 盲验发现 → 汇总修复清单，每条发现必须能落到 file:line
+budget:
+  maxAgents: 8
+  maxBatches: 1
+  maxWallClockSec: 900
+inputs:
+  type: object
+  required: [target]
+  properties:
+    target:
+      type: string
+      minLength: 3
+    focus:
+      type: string
+      default: correctness, security, error handling
+    maxFiles:
+      type: integer
+      default: 3
+      minimum: 1
+steps:
+  - id: inventory
+    kind: agent
+    phase: 盘点
+    prompt: |
+      你是代码审计的领队。目标目录：{{target}}
+      先用列目录/搜索工具看结构，挑出最值得审查的模块。判据（按优先级）：{{focus}}
+      最多挑 {{maxFiles}} 个，必须是可独立审查的单元（一个入口文件或一个模块目录）。
+      不要审查测试与文档。只输出 JSON，不要解释。
+    schema:
+      type: object
+      additionalProperties: false
+      required: [areas]
+      properties:
+        areas:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required: [id, path, why]
+            properties:
+              id:
+                type: string
+              path:
+                type: string
+              why:
+                type: string
+
+  - id: review
+    kind: fanout
+    over: inventory.areas
+    as: a
+    phase: 审查
+    maxItems: 3
+    prompt: |
+      只审查这一个模块：{{a.path}}（{{a.why}}）。不要顺带审查别处。
+      先读入口文件，再看它直接调用的实现。
+      报告 1-3 个确实存在的问题，不要罗列风格偏好、命名、格式。
+      每条必须给出：
+      - title：一句话描述
+      - file：相对路径
+      - line：整数行号
+      - evidence：该位置的原文代码，最多 2 行，一字不改
+      - severity：high | medium | low
+      - fix：一句话怎么改
+      没把握的问题不要写，宁少勿滥。只输出 JSON。
+    schema:
+      type: object
+      additionalProperties: false
+      required: [areaId, findings]
+      properties:
+        areaId:
+          type: string
+        findings:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required: [title, file, line, evidence, severity, fix]
+            properties:
+              title:
+                type: string
+              file:
+                type: string
+              line:
+                type: integer
+              evidence:
+                type: string
+              severity:
+                type: string
+                enum: [high, medium, low]
+              fix:
+                type: string
+
+  - id: verify
+    kind: fanout
+    over: review
+    as: r
+    phase: 核验
+    maxItems: 3
+    prompt: |
+      你是独立核验人，只核对下面这些发现，不要补充新问题。
+      发现列表：{{r}}
+      对每一条：打开 file 的 line 附近，判断 evidence 是否真的存在、描述是否与代码相符。
+      证据存在且问题成立 → strong；描述与代码不符 → none；证据存在但影响很小 → weak。
+      不要因为作者写了 fix 就默认它成立。只输出 JSON。
+    schema:
+      type: object
+      additionalProperties: false
+      required: [areaId, verdicts]
+      properties:
+        areaId:
+          type: string
+        verdicts:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required: [title, support, reason]
+            properties:
+              title:
+                type: string
+              support:
+                type: string
+                enum: [strong, weak, none]
+              reason:
+                type: string
+
+  - id: report
+    kind: agent
+    phase: 汇总
+    dependsOn: [verify]
+    prompt: |
+      汇总审计结果，写一份给代码作者看的中文报告。
+      目标：{{target}}
+      硬性规则：
+      1. 只保留 support=strong 的发现；weak/none 一律不写。
+      2. 按 severity 排序（high → low）；同一 file+line 只保留一条。
+      3. 每条写清 file:line、问题、一句话修复建议。
+      4. 结尾给「优先修这 3 处」。
+      核验结果：{{verify}}
+      只输出 JSON。
+    schema:
+      type: object
+      additionalProperties: false
+      required: [markdown, findings, counts]
+      properties:
+        markdown:
+          type: string
+        findings:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required: [title, file, line, severity, fix]
+            properties:
+              title:
+                type: string
+              file:
+                type: string
+              line:
+                type: integer
+              severity:
+                type: string
+                enum: [high, medium, low]
+              fix:
+                type: string
+        counts:
+          type: object
+          additionalProperties: false
+          required: [high, medium, low]
+          properties:
+            high:
+              type: integer
+            medium:
+              type: integer
+            low:
+              type: integer

@@ -1,0 +1,27 @@
+id: smoke
+name: 冒烟自检
+version: 1
+description: 两个 agent 的最小流程，用来验证引擎、预算、产物与 trace 是否正常
+budget:
+  maxAgents: 2
+  maxBatches: 1
+  maxWallClockSec: 180
+inputs:
+  type: object
+  properties:
+    topic:
+      type: string
+      default: 多智能体工作流
+steps:
+  - id: explain
+    kind: agent
+    phase: 说明
+    prompt: |
+      用一句话解释「{{topic}}」，不超过 40 字。只输出这句话。
+  - id: shrink
+    kind: agent
+    phase: 压缩
+    dependsOn: [explain]
+    prompt: |
+      把下面的内容压缩到 15 字以内，只输出结果：
+      {{explain}}

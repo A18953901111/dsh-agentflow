@@ -1,0 +1,26 @@
+[
+  {
+    "id": "ds-pricing",
+    "template": "research-report",
+    "params": { "topic": "DeepSeek API 的定价与上下文窗口", "depth": "quick" },
+    "expect": { "containsAny": ["token", "定价", "上下文"] }
+  },
+  {
+    "id": "agent-frameworks",
+    "template": "research-report",
+    "params": { "topic": "开源 AI Agent 框架的主要差异", "depth": "quick" },
+    "expect": { "containsAny": ["框架", "Agent"] }
+  },
+  {
+    "id": "smoke",
+    "template": "smoke",
+    "params": { "topic": "多智能体工作流" },
+    "expect": { "containsAny": ["智能体"] }
+  },
+  {
+    "id": "audit-self",
+    "template": "codebase-audit",
+    "params": { "target": "src", "maxFiles": 2, "focus": "correctness, budget accounting" },
+    "expect": { "containsAny": ["修复", "file", "行"] }
+  }
+]
