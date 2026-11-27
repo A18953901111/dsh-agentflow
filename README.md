@@ -165,16 +165,15 @@ npm 上名字带 agentflow 的包有几十个，其中和本插件同类的是�
 
 ## 开发
 
-```powershell
-$node = "D:\soft app\deepseekharness\resources\runtime\primary-runtime\dependencies\node\bin\node.exe"
-& $node .\test\schema.test.js       # 7
-& $node .\test\compile.test.js      # 13  ← 含「所有模板都能编译且不超自己预算」
-& $node .\test\anchors.test.js      # 6
-& $node .\test\store.test.js        # 9   ← 坏索引重建、跨实例串行、陈旧锁回收/续命
-& $node .\test\eval.test.js         # 4
-& $node .\test\routes.test.js       # 6
-& $node .\test\markdown.test.js     # 2   ← 成品提取（write/report 两种命名）
-& $node .\test\integration.test.js  # 8   ← 假引擎，覆盖 工具 → runtime → 产物 全链路
+```bash
+npm install
+npm test          # node --test "test/*.test.js"，55 个断言
 ```
 
-注意：`node --test` 在本机沙箱里会因 `spawn EPERM` 失败，必须逐文件直接运行。
+单文件运行（定位失败用例时更快）：
+
+```bash
+node test/compile.test.js
+```
+
+注意：不带参数的 `node --test` 在受限沙箱里可能报 `spawn EPERM`，用上面的显式 glob 即可；普通终端和 CI 不受影响。
