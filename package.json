@@ -1,9 +1,17 @@
 {
   "name": "dsh-agentflow",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "description": "Declarative multi-agent workflow engine for DeepSeek Harness: YAML templates, hard agent budgets, verified citation anchors, run artifacts and a sidebar run panel.",
   "license": "MIT",
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/A18953901111/dsh-agentflow.git"
+  },
+  "homepage": "https://github.com/A18953901111/dsh-agentflow#readme",
+  "bugs": {
+    "url": "https://github.com/A18953901111/dsh-agentflow/issues"
+  },
   "keywords": [
     "dsh",
     "dsh-plugin",

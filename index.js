@@ -13,7 +13,7 @@ export const name = 'agentflow';
 // be undefined at apply() time, and the routes would be skipped silently
 // (observed: `routes: false` while the panel showed HTTP 404).
 export const inject = ['tools', 'workflowEngine', 'systemPrompt', 'webServer'];
-export const VERSION = '0.7.0';
+export const VERSION = '0.7.1';
 
 const PROMPT_SECTION = `AgentFlow provides reusable multi-agent workflow templates through the wf_* tools. Use wf_list to see templates and wf_run to execute one when the user's request matches it (deep research report, codebase audit). Each template carries a hard agent budget, validates its inputs, writes run artifacts (run.json, trace.jsonl, result.md) and verifies citation anchors against their sources. Prefer wf_run over an ad-hoc workflow script when a template fits; use the built-in workflow tool for one-off orchestration.`;
 

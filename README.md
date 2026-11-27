@@ -1,6 +1,7 @@
 # AgentFlow
 
 [![npm](https://img.shields.io/npm/v/dsh-agentflow?color=24543F)](https://www.npmjs.com/package/dsh-agentflow)
+[![GitHub](https://img.shields.io/badge/GitHub-A18953901111%2Fdsh--agentflow-24292f?logo=github)](https://github.com/A18953901111/dsh-agentflow)
 [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 ![DSH](https://img.shields.io/badge/DSH-0.2.1--rc.5-6aa583)
 
